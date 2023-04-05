@@ -49,6 +49,7 @@ public class Order {
         delivery.setOrder(this);
     }
 
+    // 생성 메서드
     public static Order createorder(Member member, Delivery delivery, OrderItem... orderItems) {
         Order order = new Order();
         order.setMember(member);
