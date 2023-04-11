@@ -8,12 +8,47 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequiredArgsConstructor
 public class MemberApiController {
 
     private final MemberService memberService;
+
+    // membersV1 처럼 사용하면 안 됨. 왜 ?
+    // 온전히 Member 정보만 보여줘야 하는데, orders 정보도 같이 리턴함.
+    // 만약 orders 정보를 돌려주지 않기 위한 처리를 했다면, 만약 다른 API에서 orders 정보가 필요한 경우에는 그대로 적용하기 어려움.
+    // 또한 Member 엔티티가 변경되면 API 스펙 자체가 변경 되므로 엔티티 자체를 노출하는 것은 하면 안 됨.
+    @GetMapping("/api/v1/members")
+    public List<Member> membersV1() {
+        return memberService.findMembers();
+    }
+
+    @GetMapping("/api/v2/members")
+    public Result membersV2() {
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDTO> collect = findMembers.stream()
+                .map(m -> new MemberDTO(m.getName()))
+                .collect(Collectors.toList());
+
+        return new Result(collect.size(), collect);
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class Result<T> {
+        private int count;
+        private T data;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class MemberDTO {
+        private String name;
+    }
 
     @PostMapping("/api/v1/members")
     public CreateMemberResponse saveMemberV1(@RequestBody @Valid Member member) {
