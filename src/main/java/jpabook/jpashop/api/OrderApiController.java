@@ -9,6 +9,7 @@ import jpabook.jpashop.repository.OrderSearch;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -55,10 +56,29 @@ public class OrderApiController {
     //엔티티의 조회 수도 증가하게 된다. JPA의 distinct는 SQL에 distinct를 추가하고, 더해서 같은 엔티티가
     //조회되면, 애플리케이션에서 중복을 걸러준다. 이 예에서 order가 컬렉션 페치 조인 때문에 중복 조회 되는
     //것을 막아준다.
-    //단점: 페이징 불가능
+    //단점: 페이징 불가능. why ? 일다대에서 일(1)을 기준으로 페이징을 하는 것이 목적임. 그런데 데이터는 다(N)를 기준으로 row가 생성.
     @GetMapping("/api/v3/orders")
     public List<OrderDto> ordersV3() {
         List<Order> orders = orderRepository.findAllWithItem();
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    /**
+     * V3.1 엔티티를 조회해서 DTO로 변환 페이징 고려
+     * - ToOne 관계만 우선 모두 페치 조인으로 최적화
+     * - 컬렉션 관계는 hibernate.default_batch_fetch_size, @BatchSize로 최적화
+     */
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "limit", defaultValue = "100") int limit
+    ) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit);
+
         List<OrderDto> result = orders.stream()
                 .map(o -> new OrderDto(o))
                 .collect(Collectors.toList());
