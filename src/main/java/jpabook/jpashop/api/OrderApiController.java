@@ -45,6 +45,22 @@ public class OrderApiController {
         return collect;
     }
 
+    //페치 조인으로 SQL이 1번만 실행됨
+    //distinct 를 사용한 이유는 1대다 조인이 있으므로 데이터베이스 row가 증가한다. 그 결과 같은 order
+    //엔티티의 조회 수도 증가하게 된다. JPA의 distinct는 SQL에 distinct를 추가하고, 더해서 같은 엔티티가
+    //조회되면, 애플리케이션에서 중복을 걸러준다. 이 예에서 order가 컬렉션 페치 조인 때문에 중복 조회 되는
+    //것을 막아준다.
+    //단점: 페이징 불가능
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
     @Data
     static class OrderDto {
         private Long orderId;
@@ -72,7 +88,6 @@ public class OrderApiController {
         private String itemName;
         private int orderPrice;
         private int count;
-
 
         public OrderItemDto(OrderItem orderItem) {
             itemName = orderItem.getItem().getName();
