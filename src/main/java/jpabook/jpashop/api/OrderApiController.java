@@ -21,6 +21,9 @@ public class OrderApiController {
 
     private final OrderRepository orderRepository;
 
+    // 엔티티 직접 노출 (사용하면 안 됨)
+    // Hibernate5Module 모듈 등록, LAZY=null 처리
+    // 양방향 관계 문제 발생 -> @JsonIgnore 추가 필요
     @GetMapping("/api/v1/orders")
     public List<Order> ordersV1() {
         List<Order> all = orderRepository.findAllByString(new OrderSearch());
@@ -35,6 +38,8 @@ public class OrderApiController {
         return all;
     }
 
+    // 엔티티를 DTO로 변환하여 리턴
+    // N + 1 문제 발생
     @GetMapping("/api/v2/orders")
     public List<OrderDto> ordersV2() {
         List<Order> orders = orderRepository.findAllByString(new OrderSearch());
