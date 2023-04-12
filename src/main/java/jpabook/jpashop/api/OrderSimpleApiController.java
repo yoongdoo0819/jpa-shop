@@ -50,6 +50,18 @@ public class OrderSimpleApiController {
         return result;
     }
 
+    // fetch join으로 엔티티를 쿼리 1번에 조회하므로 사용 N + 1 문제 해결
+    // fetch join으로 order -> member , order -> delivery 는 이미 조회 된 상태 이므로 지연로딩 X
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery();
+        List<SimpleOrderDto> result = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
     @Data
     static class SimpleOrderDto {
         private Long orderId;
